@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">底部黑条</string>
+    <string name="accessibility_description">在屏幕底部绘制一条与顶部刘海等高的纯黑遮罩，仅用于视觉对称。不读取屏幕内容、不收集任何数据、不操作任何控件。关闭后黑条立即消失。</string>
+</resources>
