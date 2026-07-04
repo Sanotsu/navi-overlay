@@ -1,21 +1,43 @@
 # Navi Overlay（底部黑条）
 
-在 Android 12+ 设备上，在屏幕底部绘制一条遮罩，与顶部系统状态栏（挖孔/刘海隐藏后）形成**视觉对称**。专为无法接受挖孔屏、开启"隐藏刘海"后觉得底部过于纤细的用户设计。
+在 Android 12+ 设备上，在屏幕底部绘制一条遮罩，与顶部系统状态栏（挖孔/刘海隐藏后）形成**视觉对称**。专为无法接受挖孔屏、开启"隐藏刘海"后觉得头重脚低不对称不舒服的用户设计。
 
 ## 功能特性
 
 - **视觉对称**：底部遮罩与状态栏等高，上下呼应
 - **手势导航友好**：默认仅覆盖手势条高度，避免遮挡底部导航按钮
-- **牛角弧（R 角匹配）**：遮罩顶部两端弧形延伸，与手机物理圆角视觉呼应
-- **可自定义颜色**：预设 + 十六进制 + RGB 滑块
+- **R角匹配**：遮罩顶部两端弧形延伸，与手机物理圆角视觉呼应
+- **可自定义颜色**：预设(纯黑) + 十六进制 + RGB 滑块
 - **白名单**：指定 App 在前台时自动隐藏遮罩
 - **无障碍服务保活**：系统级高优先级，不易被后台清理杀死
 - **开机自启**：开启无障碍后，无需额外配置
 - **常驻通知（可选）**：默认关闭，用户可选择开启
 
+## 安装下载
+
+直接在 [release](https://github.com/Sanotsu/navi-overlay/releases) 下载安装即可。
+
+## 效果截图
+
+我的开发机是小米12S的MIUI14.0.3.0版本，其他品牌型号不一定通用，请自测和反馈，谢谢。
+
+MIUI默认有两种系统导航方式：
+
+1. 经典导航栏
+
+![](./_screenshots/导航键模式截图.png)
+
+2. 全面屏手势
+
+![](./_screenshots/全面屏手势截图.png)
+
+3. APP截图和双刘海屏设定
+
+![](./_screenshots/软件截图和双刘海设定.jpg)
+
 ## 环境要求
 
-| 项             | 版本                   |
+| 项次           | 版本                   |
 | -------------- | ---------------------- |
 | Android SDK    | 31 (Android 12) 及以上 |
 | JDK            | 17+（推荐 21）         |
@@ -34,7 +56,7 @@
 │       ├── kotlin/com/swm/navi_overlay/
 │       │   ├── MainActivity.kt               # Compose UI（设置主页 + 颜色选择器 + 弹窗）
 │       │   ├── WhitelistScreen.kt            # 白名单管理页
-│       │   ├── OverlayA11yService.kt         # ★ 核心：无障碍服务（遮罩绘制 + 前台检测 + 横竖屏）
+│       │   ├── OverlayA11yService.kt         # 核心：无障碍服务（遮罩绘制 + 前台检测 + 横竖屏）
 │       │   ├── BarView.kt                    # 自定义 View（4 层渲染 pipeline）
 │       │   ├── OverlayPrefs.kt               # SharedPreferences 持久化
 │       │   ├── NavUtils.kt                   # 导航栏 / 状态栏 / 屏幕 R 角检测
@@ -152,6 +174,16 @@ gradlew.bat assembleRelease
 
 # Linux / macOS
 ./gradlew assembleRelease
+
+### 如果没有gradle-wrapper.jar，先下载
+# 1. 确保目录存在
+mkdir -Force gradle\wrapper
+
+# 2. 使用 PowerShell 下载 gradle-wrapper.jar
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/gradle/gradle/v8.14.0/gradle/wrapper/gradle-wrapper.jar" -OutFile "gradle\wrapper\gradle-wrapper.jar"
+
+# 如果上面不行，试试这个镜像：
+# Invoke-WebRequest -Uri "https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.14/gradle-wrapper-8.14.jar" -OutFile "gradle\wrapper\gradle-wrapper.jar"
 ```
 
 #### 4. 输出
@@ -176,7 +208,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 ```kotlin
 defaultConfig {
     versionCode = 2       // 整数，每次发布 +1
-    versionName = "0.2.0" // 展示给用户的版本号
+    versionName = "0.1.0-beta.1" // 展示给用户的版本号
 }
 ```
 
@@ -203,23 +235,23 @@ defaultConfig {
 
 ```
 ┌────────────────────────────────────────────────────┐
-│ 1. Surface 像素格式 (PixelFormat)                    │
+│ 1. Surface 像素格式 (PixelFormat)                   │
 │    牛角关闭 → RGBX_8888（无 alpha 通道，不可混合）    │
 │    牛角开启 → RGBA_8888（有 alpha，允许透明）         │
-│    ↑ SurfaceFlinger 合成器根据这层决定是否做 α 混合    │
+│    ↑ SurfaceFlinger 合成器根据这层决定是否做 α 混合   │
 ├────────────────────────────────────────────────────┤
 │ 2. View 背景 (setBackgroundColor)                   │
-│    牛角关闭 → 遮罩颜色（不透明）                       │
-│    牛角开启 → TRANSPARENT（Path 决定填充区域）         │
-│    ↑ 系统在 onDraw 之前先画这层                       │
+│    牛角关闭 → 遮罩颜色（不透明）                      │
+│    牛角开启 → TRANSPARENT（Path 决定填充区域）        │
+│    ↑ 系统在 onDraw 之前先画这层                      │
 ├────────────────────────────────────────────────────┤
 │ 3. Canvas 绘制 (onDraw → drawColor)                 │
 │    canvas.drawColor(color) 填充整个 canvas / clip 区域│
 │    ↑ 最终像素色值                                    │
 ├────────────────────────────────────────────────────┤
 │ 4. SurfaceFlinger 合成 (α / dimAmount)              │
-│    params.alpha / params.dimAmount                  │
-│    ↑ 系统层级的透明度控制                             │
+│    params.alpha / params.dimAmount                 │
+│    ↑ 系统层级的透明度控制                            │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -239,9 +271,9 @@ defaultConfig {
    ╲                                           ╱
     ╲   ← 圆弧（圆心在 (r,0)，屏幕内侧）        ╱
      ●(r,r) ──── 直线 ──── ●(w-r,r)          ← 与矩形主体连接
-     ██████████████████████████
-     ██████  矩形主体  ██████
-     ██████████████████████████
+     ████████████████████████████████████████
+     █████████████    矩形主体   █████████████
+     ████████████████████████████████████████
 ```
 
 - **圆心** `(r, 0)` 和 `(w-r, 0)` —— 均在屏幕内侧（x > 0）
@@ -312,16 +344,6 @@ adb shell "dumpsys SurfaceFlinger --layer-list | grep -i -A 15 navi"
 adb logcat -v time *:S System.err:W | findstr "navi"
 ```
 
-### 常见问题
-
-| 现象              | 原因                                         | 解决                                  |
-| ----------------- | -------------------------------------------- | ------------------------------------- |
-| 遮罩看起来半透明  | 检查 `alpha` 值，可能 ROM 干预               | 确认使用 `TYPE_ACCESSIBILITY_OVERLAY` |
-| 牛角弧不显示      | `hornRadiusDp` 在构造后修改，背景未更新      | 已在 setter 中修复                    |
-| 重进 App 状态丢失 | `running` 标志持久化在 `OverlayPrefs` 中     | 正常恢复                              |
-| 遮罩几秒后消失    | 前版本 bug，已修复（`queryUsageStats` 兜底） | 升级即可                              |
-| APK 体积大        | 前版本未开 R8                                | 现已全开，Release 约 2.5MB            |
-
 ## 技术栈
 
 - **Kotlin**（100%）
@@ -330,3 +352,7 @@ adb logcat -v time *:S System.err:W | findstr "navi"
 - **WindowManager**（系统级悬浮窗绘制）
 - **SharedPreferences**（持久化）
 - **R8 + ProGuard**（Release 混淆压缩）
+
+---
+
+本说明文档由 DeepSeek V4 Pro 协助编写。
