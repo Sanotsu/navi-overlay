@@ -2,6 +2,7 @@
 
 package com.swm.navi_overlay
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -91,6 +92,24 @@ fun SettingsScreen(onWhitelist: () -> Unit) {
     var barColor by remember { mutableIntStateOf(OverlayPrefs.getBarColor(ctx)) }
     var statusBarH by remember { mutableFloatStateOf(NavUtils.getStatusBarHeightDp(ctx)) }
 
+    // 信息显示模块状态（时钟 / 电量 / 自定义文字 / 低电量提醒 / 呼吸动画）
+    var showClock by remember { mutableStateOf(OverlayPrefs.getShowClock(ctx)) }
+    var showBattery by remember { mutableStateOf(OverlayPrefs.getShowBattery(ctx)) }
+    var showCustomText by remember { mutableStateOf(OverlayPrefs.getShowCustomText(ctx)) }
+    var customText by remember { mutableStateOf(OverlayPrefs.getCustomText(ctx)) }
+    var lowBatteryWarn by remember { mutableStateOf(OverlayPrefs.getLowBatteryWarning(ctx)) }
+    var lowBatteryThreshold by remember { mutableIntStateOf(OverlayPrefs.getLowBatteryThreshold(ctx)) }
+    var breathAnim by remember { mutableStateOf(OverlayPrefs.getBreathAnimation(ctx)) }
+
+    // 第二梯队：系统指标
+    var showDate by remember { mutableStateOf(OverlayPrefs.getShowDate(ctx)) }
+    var showBatteryTemp by remember { mutableStateOf(OverlayPrefs.getShowBatteryTemp(ctx)) }
+    var showBatteryVoltage by remember { mutableStateOf(OverlayPrefs.getShowBatteryVoltage(ctx)) }
+    var showCpuTemp by remember { mutableStateOf(OverlayPrefs.getShowCpuTemp(ctx)) }
+    var showCpuUsage by remember { mutableStateOf(OverlayPrefs.getShowCpuUsage(ctx)) }
+    var showRamUsage by remember { mutableStateOf(OverlayPrefs.getShowRamUsage(ctx)) }
+    var showStorage by remember { mutableStateOf(OverlayPrefs.getShowStorage(ctx)) }
+
     fun refresh() {
         overlay = android.provider.Settings.canDrawOverlays(ctx)
         a11yOn = A11yUtils.isEnabled(ctx)
@@ -106,6 +125,20 @@ fun SettingsScreen(onWhitelist: () -> Unit) {
         cornerSource = cornerInfo.source
         barColor = OverlayPrefs.getBarColor(ctx)
         statusBarH = NavUtils.getStatusBarHeightDp(ctx)
+        showClock = OverlayPrefs.getShowClock(ctx)
+        showBattery = OverlayPrefs.getShowBattery(ctx)
+        showCustomText = OverlayPrefs.getShowCustomText(ctx)
+        customText = OverlayPrefs.getCustomText(ctx)
+        lowBatteryWarn = OverlayPrefs.getLowBatteryWarning(ctx)
+        lowBatteryThreshold = OverlayPrefs.getLowBatteryThreshold(ctx)
+        breathAnim = OverlayPrefs.getBreathAnimation(ctx)
+        showDate = OverlayPrefs.getShowDate(ctx)
+        showBatteryTemp = OverlayPrefs.getShowBatteryTemp(ctx)
+        showBatteryVoltage = OverlayPrefs.getShowBatteryVoltage(ctx)
+        showCpuTemp = OverlayPrefs.getShowCpuTemp(ctx)
+        showCpuUsage = OverlayPrefs.getShowCpuUsage(ctx)
+        showRamUsage = OverlayPrefs.getShowRamUsage(ctx)
+        showStorage = OverlayPrefs.getShowStorage(ctx)
         if (NavUtils.detectNavMode(ctx) == "three_button" && !OverlayPrefs.getShowHintsEverSet(ctx)) {
             showHints = true
             OverlayPrefs.setShowHints(ctx, true)
@@ -123,6 +156,34 @@ fun SettingsScreen(onWhitelist: () -> Unit) {
                 OverlayA11yService.instance?.refreshBar()
             }
         }
+    }
+
+    // 自定义文字与系统信息互斥：开启任一会自动关闭另一组
+    fun disableAllInfo() {
+        if (showClock) { showClock = false; OverlayPrefs.setShowClock(ctx, false) }
+        if (showDate) { showDate = false; OverlayPrefs.setShowDate(ctx, false) }
+        if (showBattery) { showBattery = false; OverlayPrefs.setShowBattery(ctx, false) }
+        if (showBatteryTemp) { showBatteryTemp = false; OverlayPrefs.setShowBatteryTemp(ctx, false) }
+        if (showBatteryVoltage) { showBatteryVoltage = false; OverlayPrefs.setShowBatteryVoltage(ctx, false) }
+        if (showCpuTemp) { showCpuTemp = false; OverlayPrefs.setShowCpuTemp(ctx, false) }
+        if (showCpuUsage) { showCpuUsage = false; OverlayPrefs.setShowCpuUsage(ctx, false) }
+        if (showRamUsage) { showRamUsage = false; OverlayPrefs.setShowRamUsage(ctx, false) }
+        if (showStorage) { showStorage = false; OverlayPrefs.setShowStorage(ctx, false) }
+    }
+
+    /** 切换任一系统信息开关；若开启，自动关闭自定义文字模式。 */
+    fun setInfoToggle(
+        newValue: Boolean,
+        localSetter: (Boolean) -> Unit,
+        prefsSetter: (Context, Boolean) -> Unit
+    ) {
+        localSetter(newValue)
+        prefsSetter(ctx, newValue)
+        if (newValue && showCustomText) {
+            showCustomText = false
+            OverlayPrefs.setShowCustomText(ctx, false)
+        }
+        OverlayA11yService.instance?.refreshBar()
     }
 
     // 加载
@@ -227,6 +288,75 @@ fun SettingsScreen(onWhitelist: () -> Unit) {
                     })
                 }
             }
+            Spacer(Modifier.height(12.dp))
+
+            // ── 信息显示 ──
+            InfoDisplayCard(
+                showClock = showClock,
+                showDate = showDate,
+                showBattery = showBattery,
+                showBatteryTemp = showBatteryTemp,
+                showBatteryVoltage = showBatteryVoltage,
+                showCpuTemp = showCpuTemp,
+                showCpuUsage = showCpuUsage,
+                showRamUsage = showRamUsage,
+                showStorage = showStorage,
+                showCustomText = showCustomText,
+                customText = customText,
+                lowBatteryWarn = lowBatteryWarn,
+                lowBatteryThreshold = lowBatteryThreshold,
+                breathAnim = breathAnim,
+                bodyHeightDp = height - hornR,
+                onClockChange = { v ->
+                    setInfoToggle(v, { showClock = it }, OverlayPrefs::setShowClock)
+                },
+                onDateChange = { v ->
+                    setInfoToggle(v, { showDate = it }, OverlayPrefs::setShowDate)
+                },
+                onBatteryChange = { v ->
+                    setInfoToggle(v, { showBattery = it }, OverlayPrefs::setShowBattery)
+                },
+                onBatteryTempChange = { v ->
+                    setInfoToggle(v, { showBatteryTemp = it }, OverlayPrefs::setShowBatteryTemp)
+                },
+                onBatteryVoltageChange = { v ->
+                    setInfoToggle(v, { showBatteryVoltage = it }, OverlayPrefs::setShowBatteryVoltage)
+                },
+                onCpuTempChange = { v ->
+                    setInfoToggle(v, { showCpuTemp = it }, OverlayPrefs::setShowCpuTemp)
+                },
+                onCpuUsageChange = { v ->
+                    setInfoToggle(v, { showCpuUsage = it }, OverlayPrefs::setShowCpuUsage)
+                },
+                onRamUsageChange = { v ->
+                    setInfoToggle(v, { showRamUsage = it }, OverlayPrefs::setShowRamUsage)
+                },
+                onStorageChange = { v ->
+                    setInfoToggle(v, { showStorage = it }, OverlayPrefs::setShowStorage)
+                },
+                onCustomTextToggle = { v ->
+                    showCustomText = v
+                    OverlayPrefs.setShowCustomText(ctx, v)
+                    if (v) disableAllInfo()
+                    OverlayA11yService.instance?.refreshBar()
+                },
+                onCustomTextChange = { v ->
+                    customText = v; OverlayPrefs.setCustomText(ctx, v)
+                    OverlayA11yService.instance?.refreshBar()
+                },
+                onLowBatteryWarnChange = { v ->
+                    lowBatteryWarn = v; OverlayPrefs.setLowBatteryWarning(ctx, v)
+                    OverlayA11yService.instance?.refreshBar()
+                },
+                onLowBatteryThresholdChange = { v ->
+                    lowBatteryThreshold = v; OverlayPrefs.setLowBatteryThreshold(ctx, v)
+                    OverlayA11yService.instance?.refreshBar()
+                },
+                onBreathAnimChange = { v ->
+                    breathAnim = v; OverlayPrefs.setBreathAnimation(ctx, v)
+                    OverlayA11yService.instance?.refreshBar()
+                }
+            )
             Spacer(Modifier.height(12.dp))
 
             // ── 常驻通知 ──
@@ -649,4 +779,209 @@ fun ColorPickerDialog(initialColor: Int, onConfirm: (Int) -> Unit, onDismiss: ()
             TextButton(onClick = onDismiss) { Text("取消") }
         }
     )
+}
+
+// ── 信息显示卡片（时钟 / 日期 / 电量 / 温度 / 电压 / CPU / 内存 / 存储） ───
+
+@Composable
+fun InfoDisplayCard(
+    showClock: Boolean,
+    showDate: Boolean,
+    showBattery: Boolean,
+    showBatteryTemp: Boolean,
+    showBatteryVoltage: Boolean,
+    showCpuTemp: Boolean,
+    showCpuUsage: Boolean,
+    showRamUsage: Boolean,
+    showStorage: Boolean,
+    showCustomText: Boolean,
+    customText: String,
+    lowBatteryWarn: Boolean,
+    lowBatteryThreshold: Int,
+    breathAnim: Boolean,
+    bodyHeightDp: Float,
+    onClockChange: (Boolean) -> Unit,
+    onDateChange: (Boolean) -> Unit,
+    onBatteryChange: (Boolean) -> Unit,
+    onBatteryTempChange: (Boolean) -> Unit,
+    onBatteryVoltageChange: (Boolean) -> Unit,
+    onCpuTempChange: (Boolean) -> Unit,
+    onCpuUsageChange: (Boolean) -> Unit,
+    onRamUsageChange: (Boolean) -> Unit,
+    onStorageChange: (Boolean) -> Unit,
+    onCustomTextToggle: (Boolean) -> Unit,
+    onCustomTextChange: (String) -> Unit,
+    onLowBatteryWarnChange: (Boolean) -> Unit,
+    onLowBatteryThresholdChange: (Int) -> Unit,
+    onBreathAnimChange: (Boolean) -> Unit
+) {
+    Card {
+        Column(Modifier.padding(16.dp)) {
+            // 头部说明
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("信息显示", fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "在黑条上显示时钟、电量、温度等系统信息，与顶部状态栏功能对称。开启任一项后将替代按键定位点；不同指标以颜色区分。",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "ℹ 「自定义文字」与「系统信息」互斥，同时只能启用一种。开启任一会自动关闭另一。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // 黑条身体高度不足时显示警告
+            if (bodyHeightDp < 22f) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "提示：当前黑条身体高度 ${bodyHeightDp.toInt()} dp，需 ≥ 22 dp 才会显示信息",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── 时间组 ──
+            InfoSectionHeader("时间")
+            InfoToggleRow(
+                Icons.Default.Schedule, "时钟",
+                "左侧显示当前时间（跟随系统 12/24 小时制）",
+                showClock, onClockChange
+            )
+            InfoToggleRow(
+                Icons.Default.Event, "日期 / 星期",
+                "时钟右侧显示日期和星期（如 12/5 周日）",
+                showDate, onDateChange
+            )
+
+            InfoGroupDivider()
+
+            // ── 电池组 ──
+            InfoSectionHeader("电池")
+            InfoToggleRow(
+                Icons.Default.BatteryStd, "电量 %",
+                "右侧显示电量百分比，充电时附加闪电图标",
+                showBattery, onBatteryChange
+            )
+            InfoToggleRow(
+                Icons.Default.Thermostat, "电池温度",
+                "电池温度 °C（橙字，来自系统电池广播）",
+                showBatteryTemp, onBatteryTempChange
+            )
+            InfoToggleRow(
+                Icons.Default.Bolt, "电池电压",
+                "电池电压 V（青字，来自系统电池广播）",
+                showBatteryVoltage, onBatteryVoltageChange
+            )
+            InfoToggleRow(
+                Icons.Default.Warning, "低电量提醒",
+                "电量低于阈值时电量化为红色",
+                lowBatteryWarn, onLowBatteryWarnChange
+            )
+            if (lowBatteryWarn) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("阈值", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.weight(1f))
+                    Text("$lowBatteryThreshold %", style = MaterialTheme.typography.bodySmall)
+                }
+                Slider(
+                    value = lowBatteryThreshold.toFloat(),
+                    onValueChange = { onLowBatteryThresholdChange(it.toInt()) },
+                    valueRange = 5f..50f,
+                    steps = 44
+                )
+                InfoToggleRow(
+                    Icons.Default.Animation, "呼吸动画",
+                    "低电量时黑条缓慢红色呼吸闪烁",
+                    breathAnim, onBreathAnimChange
+                )
+            }
+
+            InfoGroupDivider()
+
+            // ── 系统指标组（需轮询） ──
+            InfoSectionHeader("系统指标（每 3 秒刷新）")
+            InfoToggleRow(
+                Icons.Default.AcUnit, "CPU 温度",
+                "处理器温度 °C（蓝字，读 /sys/class/thermal）",
+                showCpuTemp, onCpuTempChange
+            )
+            InfoToggleRow(
+                Icons.Default.QueryStats, "CPU 负载",
+                "基于频率估算的负载百分比（紫字，读 cpufreq；实际使用率需 root）",
+                showCpuUsage, onCpuUsageChange
+            )
+            InfoToggleRow(
+                Icons.Default.Memory, "内存使用率",
+                "已用内存占总内存百分比（绿字）",
+                showRamUsage, onRamUsageChange
+            )
+            InfoToggleRow(
+                Icons.Default.Storage, "可用存储",
+                "主存储可用空间 GB（黄字）",
+                showStorage, onStorageChange
+            )
+
+            InfoGroupDivider()
+
+            // ── 个性化（独占模式：与上方系统信息互斥） ──
+            InfoSectionHeader("个性化（独占模式）")
+            InfoToggleRow(
+                Icons.Default.TextFields, "自定义文字",
+                "独占整行居中显示，字号更大；开启后自动关闭上方所有系统信息",
+                showCustomText, onCustomTextToggle
+            )
+            if (showCustomText) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customText,
+                    onValueChange = onCustomTextChange,
+                    label = { Text("显示文字（过长会自动省略）") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoSectionHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
+    )
+}
+
+@Composable
+private fun InfoGroupDivider() {
+    HorizontalDivider(Modifier.padding(vertical = 4.dp))
+}
+
+@Composable
+fun InfoToggleRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    sub: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(Modifier.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title)
+            Text(sub, style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
 }
