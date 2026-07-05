@@ -64,13 +64,13 @@ MIUI默认有两种系统导航方式：
 │   ├── proguard-rules.pro            # 混淆规则
 │   └── src/main/
 │       ├── AndroidManifest.xml       # 权限 + 服务声明
-    │       ├── kotlin/com/swm/navi_overlay/
-    │       │   ├── MainActivity.kt               # Compose UI（设置主页 + 颜色选择器 + 信息显示卡片 + 弹窗）
-    │       │   ├── WhitelistScreen.kt            # 白名单管理页
-    │       │   ├── OverlayA11yService.kt         # 核心：无障碍服务（遮罩绘制 + 前台检测 + 横竖屏 + 电量/时钟/指标采集）
-    │       │   ├── BarView.kt                    # 自定义 View（4 层渲染 pipeline + 信息显示双模式渲染）
-    │       │   ├── SystemMetrics.kt              # 系统性能指标采集（CPU 温度/使用率、内存、存储，零权限）
-    │       │   ├── OverlayPrefs.kt               # SharedPreferences 持久化
+│       ├── kotlin/com/swm/navi_overlay/
+│       │   ├── MainActivity.kt               # Compose UI（设置主页 + 颜色选择器 + 信息显示卡片 + 弹窗）
+│       │   ├── WhitelistScreen.kt            # 白名单管理页
+│       │   ├── OverlayA11yService.kt         # 核心：无障碍服务（遮罩绘制 + 前台检测 + 横竖屏 + 电量/时钟/指标采集）
+│       │   ├── BarView.kt                    # 自定义 View（4 层渲染 pipeline + 信息显示双模式渲染）
+│       │   ├── SystemMetrics.kt              # 系统性能指标采集（CPU 温度/使用率、内存、存储，零权限）
+│       │   ├── OverlayPrefs.kt               # SharedPreferences 持久化
 │       │   ├── NavUtils.kt                   # 导航栏 / 状态栏 / 屏幕 R 角检测
 │       │   ├── A11yUtils.kt                  # 无障碍开启检测 / 设置跳转
 │       │   ├── ManufacturerUtils.kt          # 厂商识别 + 后台保活引导文案
